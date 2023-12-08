@@ -12,18 +12,16 @@ def dp(capacity: int, values: list, weights: list) -> list:
     """use dynamic programming and K solution"""
     K = np.zeros((capacity+1,len(values)+1))
     density =[v/w for v,w in zip(values,weights)]
-    sorted_idx = list(np.argsort(weights))
-    sorted_idx = list(range(len(weights)))
+    sorted_idx = list(np.argsort(density))
+    orig_values = copy.deepcopy(values)
+    
     values = [values[i] for i in sorted_idx]
     weights = [weights[i] for i in sorted_idx]
-    print(f'density: {density} sorted_idx: {sorted_idx}')
-    print(f'values: {values} weights: {weights}')
     w = weights
     for r in range(capacity+1):
         for c in range(1,len(values)+1):
             if r >= weights[c-1]:
-                K[r][c] = max(values[c-1] + K[r-w[c-1]][c-1], K[r][c-1])
-                            
+                K[r][c] = max(values[c-1] + K[r-w[c-1]][c-1], K[r][c-1])           
             else:
                 K[r][c] = K[r][c-1]
     
@@ -31,7 +29,6 @@ def dp(capacity: int, values: list, weights: list) -> list:
     sol = [0]*(len(values))
     # backtrack through K now
     cols = len(K[0])
-    done = False
     for c in range(cols-1,0,-1):
         if K[row][c] == K[row][c-1]:
             sol[c-1] = 0
@@ -41,7 +38,7 @@ def dp(capacity: int, values: list, weights: list) -> list:
     reorder_solution = [0]*len(sol)
     for i in range(len(sol)):
         reorder_solution[sorted_idx[i]] = sol[i]
-    check_solution = np.sum([i*v for i,v in zip(sol,values)])
+    check_solution = np.sum([i*v for i,v in zip(reorder_solution,orig_values)])
     assert(check_solution==int(K[-1][-1]))
     return int(K[-1][-1]), reorder_solution
 
@@ -141,18 +138,8 @@ if __name__ == '__main__':
             input_data = input_data_file.read()
         v, w, capacity = read_values(input_data)
         print(f'capacity: {capacity} values: {v} weights: {w}')
-
         ans  = solve_it(input_data)
         print(ans)
-        exit(0)
-
-        memo = np.ones((capacity+1, len(v)))*-1
-        total_value = dfs(capacity, len(v)-1,v,w,memo)
-        max_value, indexes = dp(capacity, len(v)-1,v,w)
-        print(f'max_value: {max_value} indexes: {indexes}')
-        # double check my work
-        assert total_value == max_value
-
     else:
         print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/ks_4_0)')
 
