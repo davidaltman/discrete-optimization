@@ -18,6 +18,7 @@ def dp(capacity: int, values: list, weights: list) -> list:
     values = [values[i] for i in sorted_idx]
     weights = [weights[i] for i in sorted_idx]
     w = weights
+    # build graph
     for r in range(capacity+1):
         for c in range(1,len(values)+1):
             if r >= weights[c-1]:
@@ -35,12 +36,14 @@ def dp(capacity: int, values: list, weights: list) -> list:
         else:
             row -= weights[c-1]
             sol[c-1] = 1
-    reorder_solution = [0]*len(sol)
+    selected_items = [0]*len(sol)
     for i in range(len(sol)):
-        reorder_solution[sorted_idx[i]] = sol[i]
-    check_solution = np.sum([i*v for i,v in zip(reorder_solution,orig_values)])
-    assert(check_solution==int(K[-1][-1]))
-    return int(K[-1][-1]), reorder_solution
+        selected_items[sorted_idx[i]] = sol[i]
+    check_solution = np.sum([i*v for i,v in zip(selected_items,orig_values)])
+    # bottom right corner of dp graph holds max value can fit in knapsack
+    total_value = int(K[-1][-1])
+    assert(check_solution==total_value)
+    return total_value, selected_items
 
 
 def dfs(capacity: int, j: int, values: list, weights: list, memo: list) -> int:
