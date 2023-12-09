@@ -6,8 +6,36 @@ import numpy as np
 import typing
 import copy
 
+import errno
+import os
+import signal
+import functools
+
+class TimeoutError(Exception):
+    pass
+
+def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(error_message)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wrapper
+
+    return decorator
+
 Item = namedtuple("Item", ['index', 'value', 'weight'])
 
+@timeout(18000)
 def dp(capacity: int, values: list, weights: list) -> list:
     """use dynamic programming and K solution"""
     K = np.zeros((capacity+1,len(values)+1))
@@ -39,6 +67,7 @@ def dp(capacity: int, values: list, weights: list) -> list:
     selected_items = [0]*len(sol)
     for i in range(len(sol)):
         selected_items[sorted_idx[i]] = sol[i]
+    # check the selected items x value to assert they add up to the graph value
     check_solution = np.sum([i*v for i,v in zip(selected_items,orig_values)])
     # bottom right corner of dp graph holds max value can fit in knapsack
     total_value = int(K[-1][-1])
